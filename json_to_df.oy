@@ -1,0 +1,13 @@
+import pandas as pd
+import os
+
+cwd = os.getcwd()
+sep = os.sep
+direct= sep.join((cwd,'data.json'))
+
+jsoner = pd.DataFrame.from_dict(direct)
+
+print(jsoner.columns)
+
+with open(direct, 'w') as outfile:
+    json.dump(data, outfile)
