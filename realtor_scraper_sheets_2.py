@@ -1,6 +1,6 @@
  # -*- coding: utf-8 -*-
+
 from bs4 import BeautifulSoup
-import requests
 import lxml.etree as etree
 import xml.etree.ElementTree as ET
 import json
@@ -13,22 +13,17 @@ import df_filter as df_f
 from pprint import pprint
 import load_vars as lv
 import google_drive as drive
-
-#cwd = os.getcwd()
-
-#direct= sep.join((cwd,'data.json'))
-
-
-#'Accept-Encoding': 'identity']
-
-#city_list = ['red-river','williamsburg','vaughn','lake-arthur','wagon-mound','eagle-nest','reserve','maxwell','willard','jemez-springs','roy','san-jon','elida','san-ysidro','corona','virden','des-moines','dora','floyd','grady','hope','causey','mosquero','encino','taos-ski-valley','house','folsom','grenville','kirtland','rio-communities']
-#state = 'nm'
+import requests
 
 
 
 
+#def create_new_sheet():
+
+#def share_spreadsheet
 
 def scrape(df,sheets_service,drive_service, folder_id):
+    import requests
     state_dict = {}
     pg_number = '/pg-'
     n_pages = 0
@@ -41,12 +36,13 @@ def scrape(df,sheets_service,drive_service, folder_id):
     spreadsheet_id = ''
     seen_columns = {}
     num_columns = 0
-    num_rows = 2
-    start = 2
+   
     sheet_dict = {}
 
-
-    #lists of collumns and keys to drop from memory
+    #will create a json file for this.  Will read into memory  at begining of run.  
+    #will also redo the skelaton.  I will rewrite all of the function for each step into this file.  and then call this file main to run.  In my mind each s
+    #possible tru/false should just call a main funciton to clear up memory for multiple runs. 
+    #lists of columns and keys to drop from memory
     pop_list=[
         'office',
         'mls',
@@ -102,30 +98,38 @@ def scrape(df,sheets_service,drive_service, folder_id):
         'office.phones']
     #for teach riow in the cities df start a search on realtor.com
     for index, row in df.iterrows():
+
         #city = row['city']
         state = row['state']
         url = row['url']
         url = url + pg_number
         real_url = url + str(1)
         
+        
         if state in state_dict.keys():
-            pprint("state already in the dict bitch")
-            spreadsheet_id = state_dict['state']
+            pprint("state already in the dict, asshole!")
+            spreadsheet_id = state_dict[state]
+            num_rows = state_dict['num_rows']
+            start = num_rows
 
         else:
             pprint("creating Spreadsheet for {}".format(state))
             spreadsheet= drive.add_spreadsheet_to_folder(drive_service,folder_id,state)
-            spreadsheet_id = (spreadsheet['id'])
+            spreadsheet_id = spreadsheet['id']
             #spreadsheet_id = spreadsheet.get('spreadsheetId')
             #pprint(spreadsheet_id)
             state_dict[state] = spreadsheet_id
+            num_rows = 2
+            start = 2
+
 
 
 
         try:
 
             print("requesting {}".format(real_url))
-            response=requests.get(real_url,headers=headers)
+            response = requests.get(real_url,headers=headers)
+            #pprint(response)
         except:
             print('could not get a response from realtor.com')
 
@@ -154,8 +158,10 @@ def scrape(df,sheets_service,drive_service, folder_id):
         time.sleep(random.randint(45,60))
         #for every page in the data scrape it and append useful data
         for page in range(0,max_it):
+            data_list = []
+            requests_list = []
             request_count = 0
-            request_list = []
+            #data_request_list = []
             n_pages += 1
             #print(direct)
             #direct= sep.join((cwd,'data.json',str(n_pages)))
@@ -212,7 +218,7 @@ def scrape(df,sheets_service,drive_service, folder_id):
             pprint(columns.to_list())
             length = len(normalized.index)
 
-            #append_blank_rows(spreadsheet_id,length, request_list)
+            #append_blank_rows(spreadsheet_id,length, data_request_list)
             #iterates through columns.  Will append columns that are not in the dict and append the data to the request list.  at the end of each page it will update if necessary.
             for column in columns:
                 if column not in seen_columns.values():
@@ -221,14 +227,15 @@ def scrape(df,sheets_service,drive_service, folder_id):
                     seen_columns[column_key] = column
                     rnge = "'Sheet1'" + "!" + column_key + str(1)
                     majorDimension = 'COLUMNS'
-                    values = [[column]]
+                    values = [column]
 
-                    request_body_tmp = {
-                        'range' : rnge,
-                        'majorDimension' : majorDimension,
-                        'values': values
-                        }
-                    request_list.append(request_body_tmp)
+                    #request_body_tmp = {
+                    #    'range' : rnge,
+                    #    'majorDimension' : majorDimension,
+                    #    'values': values
+                    #   }
+                    #data_request_list.append(request_body_tmp)
+                    appended_data = append_data(rnge,values,data_list)
                     #body = {
                     #    "majorDimension": "COLUMNS",
                     #    "values": [[column]]
@@ -244,6 +251,9 @@ def scrape(df,sheets_service,drive_service, folder_id):
                     continue
 
             num_rows = num_rows + len(normalized)
+
+            #set num_rows searched in num_rows of state_dict
+            state_dict['num_rows'] = num_rows
 
             #an unnecessary function but i will not remove it yet.  Still need to clean this shit up
             for k,v in seen_columns.items():
@@ -285,37 +295,109 @@ def scrape(df,sheets_service,drive_service, folder_id):
     
                 #print(d)
                 #a tmp variable for the request ot be appended to the request list
-                request_body_tmp = {
-                    'range': rnge,
-                    "majorDimension": "COLUMNS",
-                    "values": [d]
-                }
-                #appends another instance to the request_list list
-                request_list.append(request_body_tmp)
+                appended_data = append_data(rnge,d,data_list)
+                #appends another instance to the data_request_list list
+                #
+                # 
+                #data_request_list.append(request_body_tmp)
                 #rnge = rnge    
                 #valueInputOption="USER_ENTERED"
                 #print(v)
                 request_count = request_count + 1
             
             #creates the request body to use for batchupdate          
-            request_body = {
-                'valueInputOption': "RAW",
-                'data' :[
-                    request_list
-                ]
-            }
+
+            appended_blank_rows = append_blank_rows(spreadsheet_id,length,requests_list)
+            #appended_update_request = append_batch_update_request(spreadsheet_id,length,requests_list,data_list)
+            sent_update_value_request = send_update_values_request(spreadsheet_id,data_list,sheets_service)
+            sent_batch_update_request = send_batch_update_request(requests_list,spreadsheet_id,sheets_service)
+
+            #requests.append(append_sheet_rows_body)
+            #requests.append(data_body)
+            
+            #request_body = {
+            #    'requests':requests
+            #}
+            #pprint(request_body)
+
 
             
             #after each page send a request to google sheets to update the data sheets
-            request = sheets_service.values().batchUpdate(spreadsheetId=spreadsheet_id, body=request_body)
-            response = request.execute()
-            pprint(response)
-            pprint(seen_columns)
-            print(num_rows)
+            #pprint(request_body)
+            #request = sheets_service.values().batchUpdate(spreadsheetId=spreadsheet_id, body=request_body)
+            #response = request.execute()
+            #pprint(response)
+            #pprint(seen_columns)
+            #print(num_rows)
             start = num_rows
+            pprint(requests_list)
             time.sleep(random.randint(45,60)) 
+            
 
         print('You scraped {} pages'.format(n_pages))
+
+
+
+
+
+def send_batch_update_request(requests,spreadsheet_id,sheets_service):
+    body = {
+    'requests': requests
+    }
+    pprint(body)
+    response = sheets_service.batchUpdate(spreadsheetId=spreadsheet_id,body=body).execute()
+    pprint(response)
+    #request = sheets_service.values().batchUpdate(spreadsheetId=spreadsheet_id, body=request_body)
+    return True
+
+def append_blank_rows(spreadsheet_id,length,requests_list):
+    request_body_tmp = {
+        "appendDimension": 
+        {
+            "sheetId": 0,
+            "dimension": "ROWS",
+            "length": length
+
+        }
+    }
+
+    requests_list.append(request_body_tmp)
+    return True
+    #data_request_list.append(request_body_tmp)
+
+def append_data(rnge,d,data_list):
+    request_body_tmp = {
+        'range': rnge,
+        "majorDimension": "COLUMNS",
+        "values": [d]
+    }
+    data_list.append(request_body_tmp)
+
+def send_update_values_request(spreadsheet_id,data_list,sheets_service):
+    request_body = {
+        'valueInputOption': "RAW",
+        'data' :[
+            data_list
+        ]
+    }
+    #pprint(request_body)
+    request = sheets_service.values().batchUpdate(spreadsheetId=spreadsheet_id, body=request_body)
+    response = request.execute()
+    pprint(response)
+    #requests_list.append(request_body)
+    return True
+
+
+def create_spreadsheet(title,sheets_service):
+    spreadsheet = {
+        'properties': {
+            'title': title
+        }
+    }
+    spreadsheet = service.spreadsheets().create(body=spreadsheet,
+                                    fields='spreadsheetId').execute()
+    print('Spreadsheet ID: {0}'.format(spreadsheet.get('spreadsheetId')))
+    return spreadsheet.get('spreadsheetId')
 
 
                 

@@ -13,7 +13,7 @@ import confirm_drcts as cfs
 import fix_files as ff
 import readwrite as rw
 import df_filter as df_f
-import realtor_scraper_sheets as scraper
+import realtor_scraper_sheets_3 as scraper
 import get_creds as creds
 import goog_sheets as sheets
 from pprint import pprint
@@ -61,7 +61,7 @@ def program_skeleton(dictionary: dict):
             #pprint(dictionary['tasks']['environmental_vars']['criteria_sheet_meta'])
             #input_df = sheets.batch_download(dictionary['tasks']['environmental_vars']['criteria_sheet_meta']['input_list'],dictionary['tasks']['environmental_vars']['sheets_service'],True)
             dictionary['tasks']['environmental_vars']['input_list'] = sheets.batch_download(dictionary['tasks']['environmental_vars']['criteria_sheet_meta']['input_list'],dictionary['tasks']['environmental_vars']['sheets_service'],True)
-            scraper.scrape(dictionary['tasks']['environmental_vars']['input_list'],dictionary['tasks']['environmental_vars']['sheets_service'])
+            scraper.scrape(dictionary['tasks']['environmental_vars']['input_list'],dictionary['tasks']['environmental_vars']['sheets_service'],dictionary['tasks']['environmental_vars']['drive_service'],dictionary['tasks']['environmental_vars']['output_folder_id'])
             #print('true')
             
 
