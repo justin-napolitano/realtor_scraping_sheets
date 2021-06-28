@@ -307,6 +307,7 @@ def scrape(df,sheets_service,drive_service, folder_id):
 
             
             #after each page send a request to google sheets to update the data sheets
+            
             request = sheets_service.values().batchUpdate(spreadsheetId=spreadsheet_id, body=request_body)
             response = request.execute()
             pprint(response)
@@ -316,6 +317,22 @@ def scrape(df,sheets_service,drive_service, folder_id):
             time.sleep(random.randint(45,60)) 
 
         print('You scraped {} pages'.format(n_pages))
+
+
+
+def append_blank_rows(spreadsheet_id,length):
+    request_body_tmp = {
+        "appendDimension": 
+        {
+            "sheetId": spreadsheet_id,
+            "dimension": "ROWS",
+            "length": length
+
+        }
+    }
+    
+
+    return request_body_tmp
 
 
                 
