@@ -41,7 +41,7 @@ def scrape(df,sheets_service,drive_service, folder_id):
     
     requests_per_100 = 100
     spreadsheet_id = ''
-    seen_columns = {}
+    seen_columns = {}   
     num_columns = 0
     #sheet_dict = {}
 
@@ -72,6 +72,7 @@ def scrape(df,sheets_service,drive_service, folder_id):
         #write this into a class  called web_data.response/soup/data
         response = get_request(real_url,headers)
         soup = get_soup(real_url,response)
+        #pprint(soup)
         data = get_web_data(soup)
 
         max_it = math.ceil(data['props']['pageProps']['pageData']['matching_rows'] / 20)
@@ -112,7 +113,7 @@ def scrape(df,sheets_service,drive_service, folder_id):
             dropped = drop(normalized, drop_list)
         
 
-            pprint(normalized)
+            #pprint(normalized)
             #normalized.drop(labels = drop_list, axis = 1, inplace=True )
             columns = normalized.columns
             normalized.fillna(value="", inplace=True)
@@ -121,69 +122,36 @@ def scrape(df,sheets_service,drive_service, folder_id):
             
 
             #iterates through columns.  Will append columns that are not in the dict and append the data to the request list.  at the end of each page it will update if necessary.
-            for column in columns:
-                if column not in seen_columns.values():
-                    num_columns = num_columns + 1
-                    column_key = lv.colnum_string(num_columns)
-                    seen_columns[column_key] = column
-                    rnge = "'Sheet1'" + "!" + column_key + str(1)
-                    majorDimension = 'COLUMNS'
-                    values = [column]
-                    appended_blank_columns = append_blank_columns(spreadsheet_id,num_columns,requests_list)
-                    appended_data = append_to_data_list(rnge,values,data_list)
-           
-
-                else:
-                    continue
+            num_columns = check_columns(columns,num_columns,seen_columns,spreadsheet_id,requests_list, data_list)
+            
             
             num_rows = num_rows + len(normalized)
 
             #set num_rows searched in num_rows of state_dict
             state_dict['num_rows'] = num_rows
 
-            #an unnecessary function but i will not remove it yet.  Still need to clean this shit up
+            #an unnecessary function but i will not remove it yet.  Still need to clean this shit up.  This is for post processing the normailze function
+            #i found that it did not completely normalize some difficult hierarchies.  I will continue working on this in the upcoming days.  
+            
+            #create a new function called update collumn ranges
             for k,v in seen_columns.items():
                 try:
                     d = normalized[v].tolist()
-                    print(d)
+                    #print(d)
                     rnge = "'Sheet1'" + "!" + k + str(start) + ":" + k + str(num_rows) 
-                    print(rnge)
-                    print(v)
+                    #print(rnge)
+                    #print(v)
                 except: 
                     print('the key {} is not in the df'.format(k))
 
-                for i in range(len(d)): 
-                    if type(d[i]) is dict:
-                        print("you have a dict")
-                        string = ''
-                        lst = d.values()
-                        string = ','.join(lst)
-                        index = string
-                        pprint('joined the indexes in d..  Hopefull it looks like {}'.format(d))
-                    elif type(d[i]) is list:
-                        print("you have a list")
-                        print(d[i])
-                        for j in range(len(d[i])):
-                            if type(d[i][j]) is dict:
-                                normal = pd.json_normalize(d[i][j])
-                                print(normal)
-                                print('     you have a dict in the lst')
-                                lst = d[i][j].values()
-                                string = ','.join(lst)
-                                d[i][j] = string
-                        d[i] = ','.join(d[i])
-                        print(d[i])
-
-                                
-                    else:
-                        print('you have a {}'.format(type(index)))
+         
                 
     
                 appended_data = append_to_data_list(rnge,d,data_list)
                 request_count = request_count + 1
             
             #creates the request body to use for batchupdate          
-
+            #call this create batchUpdate requests..
             appended_blank_rows = append_blank_rows(spreadsheet_id,length,requests_list)
             #appended_update_request = append_batch_update_request(spreadsheet_id,length,requests_list,data_list)
             sent_update_value_request = send_update_values_request(spreadsheet_id,data_list,sheets_service)
@@ -196,6 +164,21 @@ def scrape(df,sheets_service,drive_service, folder_id):
 
         print('You scraped {} pages'.format(n_pages))
 
+def append_delete_duplicates_request(spreadsheet_id,requests_list,num_rows):
+    {
+    "range": {
+        {
+            "sheetId": 0,
+            "startRowIndex": 0,
+            "endRowIndex": num_rows,
+            "startColumnIndex": integer,
+            "endColumnIndex": integer
+            }
+        
+        }
+    }
+   
+
 
 def drop(normalized, drop_list):
     for key in drop_list:
@@ -205,7 +188,6 @@ def drop(normalized, drop_list):
             print('....df exception: {}'.format(key))
             continue
     return True
-
 
 def pop(data,pop_list):
 
@@ -253,7 +235,7 @@ def send_batch_update_request(requests,spreadsheet_id,sheets_service):
     }
     pprint(body)
     response = sheets_service.batchUpdate(spreadsheetId=spreadsheet_id,body=body).execute()
-    pprint(response)
+    #pprint(response)
     #request = sheets_service.values().batchUpdate(spreadsheetId=spreadsheet_id, body=request_body)
     return True
 
@@ -285,6 +267,18 @@ def append_blank_columns(spreadsheet_id,length,requests_list):
     requests_list.append(request_body_tmp)
     return True
     #data_request_list.append(request_body_tmp)
+
+def append_columns_to_data_list(seen_columns,noramlized,data_list):
+    for k,v in seen_columns.items():
+        try:
+            d = normalized[v].tolist()
+            #print(d)
+            rnge = "'Sheet1'" + "!" + k + str(start) + ":" + k + str(num_rows) 
+            #print(rnge)
+            #print(v)
+        except: 
+            print('the key {} is not in the df'.format(k))
+    return True
 
 def append_to_data_list(rnge,d,data_list):#rename to _data_list
     request_body_tmp = {
@@ -332,7 +326,8 @@ def get_drop_list():
         'office.fulfillment_id',
         'office.nrds_id',
         'office.party_id',
-        'office.phones']
+        'office.phones',
+        'social_media.facebook'}]
     return drop_list
 
 def get_pop_list():
@@ -411,5 +406,22 @@ def check_state_dict(drive_service, sheets_service, folder_id, state_dict, num_r
             
             
            # time.sleep(random.randint(45,60))
+#could probs rewrite this into a class that would also fix all of my problems.  Return the class with all of the important data.  Call it a day.  
+def check_columns(columns,num_columns,seen_columns,spreadsheet_id, requests_list, data_list):
 
-            
+    for column in columns:
+        if column not in seen_columns.values():
+            num_columns = num_columns + 1
+            column_key = lv.colnum_string(num_columns)
+            seen_columns[column_key] = column
+            rnge = "'Sheet1'" + "!" + column_key + str(1)
+            majorDimension = 'COLUMNS'
+            values = [column]
+            appended_blank_columns = append_blank_columns(spreadsheet_id,1,requests_list)
+            appended_data = append_to_data_list(rnge,values,data_list)
+            pprint(seen_columns)
+
+
+        else:
+            continue       
+    return num_columns
