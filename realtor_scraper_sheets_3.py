@@ -133,26 +133,19 @@ def scrape(df,sheets_service,drive_service, folder_id):
             #an unnecessary function but i will not remove it yet.  Still need to clean this shit up.  This is for post processing the normailze function
             #i found that it did not completely normalize some difficult hierarchies.  I will continue working on this in the upcoming days.  
             
-            #create a new function called update collumn ranges
-            for k,v in seen_columns.items():
-                try:
-                    d = normalized[v].tolist()
-                    #print(d)
-                    rnge = "'Sheet1'" + "!" + k + str(start) + ":" + k + str(num_rows) 
-                    #print(rnge)
-                    #print(v)
-                except: 
-                    print('the key {} is not in the df'.format(k))
+            #create a new function called update column ranges
 
-         
-                
-    
-                appended_data = append_to_data_list(rnge,d,data_list)
-                request_count = request_count + 1
+
+            appended_columns = append_columns_to_data_list(seen_columns,normalized,data_list,num_rows,start)
+
+            
+            
+            pprint(data_list)
             
             #creates the request body to use for batchupdate          
             #call this create batchUpdate requests..
             appended_blank_rows = append_blank_rows(spreadsheet_id,length,requests_list)
+            appended_delete_duplicates_request = append_delete_duplicates_request(spreadsheet_id,requests_list,num_rows)
             #appended_update_request = append_batch_update_request(spreadsheet_id,length,requests_list,data_list)
             sent_update_value_request = send_update_values_request(spreadsheet_id,data_list,sheets_service)
             sent_batch_update_request = send_batch_update_request(requests_list,spreadsheet_id,sheets_service)
@@ -165,18 +158,19 @@ def scrape(df,sheets_service,drive_service, folder_id):
         print('You scraped {} pages'.format(n_pages))
 
 def append_delete_duplicates_request(spreadsheet_id,requests_list,num_rows):
-    {
-    "range": {
+    request_body_tmp = {
+        "deleteDuplicates":
         {
-            "sheetId": 0,
-            "startRowIndex": 0,
-            "endRowIndex": num_rows,
-            "startColumnIndex": integer,
-            "endColumnIndex": integer
-            }
-        
+            "range": 
+                {
+                    "sheetId": 0,
+                    "startRowIndex": 0,
+                    "endRowIndex": num_rows
+                    }
         }
     }
+    requests_list.append(request_body_tmp)
+    return True
    
 
 
@@ -268,7 +262,7 @@ def append_blank_columns(spreadsheet_id,length,requests_list):
     return True
     #data_request_list.append(request_body_tmp)
 
-def append_columns_to_data_list(seen_columns,noramlized,data_list):
+def append_columns_to_data_list(seen_columns,normalized,data_list,num_rows,start):
     for k,v in seen_columns.items():
         try:
             d = normalized[v].tolist()
@@ -277,8 +271,13 @@ def append_columns_to_data_list(seen_columns,noramlized,data_list):
             #print(rnge)
             #print(v)
         except: 
-            print('the key {} is not in the df'.format(k))
-    return True
+           print('the key {} is not in the df'.format(k))
+
+
+
+        appended_data = append_to_data_list(rnge,d,data_list)
+    #request_count = request_count + 1
+    return appended_data
 
 def append_to_data_list(rnge,d,data_list):#rename to _data_list
     request_body_tmp = {
@@ -287,6 +286,7 @@ def append_to_data_list(rnge,d,data_list):#rename to _data_list
         "values": [d]
     }
     data_list.append(request_body_tmp)
+    #pprint(data_list)
 
 def send_update_values_request(spreadsheet_id,data_list,sheets_service):
     request_body = {
@@ -300,8 +300,8 @@ def send_update_values_request(spreadsheet_id,data_list,sheets_service):
     
     request = sheets_service.values().batchUpdate(spreadsheetId=spreadsheet_id, body=request_body)
     response = request.execute()
-    print("a;lkdjf;akljsd;fiajeif;alkdsn;aklsdjfp;oiadsupfadjs;lkansd;lkajs;dfkj")
-    pprint(response)
+    #print("a;lkdjf;akljsd;fiajeif;alkdsn;aklsdjfp;oiadsupfadjs;lkansd;lkajs;dfkj")
+    #pprint(response)
     #requests_list.append(request_body)
     return True
 
@@ -327,7 +327,8 @@ def get_drop_list():
         'office.nrds_id',
         'office.party_id',
         'office.phones',
-        'social_media.facebook'}]
+        'social_media.facebook',
+        'social_media.twitter']
     return drop_list
 
 def get_pop_list():
