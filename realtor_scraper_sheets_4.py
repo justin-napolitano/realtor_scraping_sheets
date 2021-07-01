@@ -22,6 +22,7 @@ import requests
 
 #def share_spreadsheet
 
+#i want to create a single structure with all of the data necessary to run the loops saved within a dictionary for each state 
 
 
 
@@ -58,15 +59,17 @@ def scrape(df,sheets_service,drive_service, folder_id):
         url = row['url']
         url = url + pg_number
         real_url = url + str(1)
-        num_rows = 2
-        start = 2
+        #num_rows = 2
+        #start = 2
     
         
         #write a check state function.  pass spreadsheet id, num_rows, start, and state dict.. update pointer in place in memory
 
         #checked_state_dict = 
         #write this into a class.  I don't liek returning a tuple froma function. I feel stupid.  
-        num_rows, start, spreadsheet_id = check_state_dict(drive_service,sheets_service,folder_id,state_dict, num_rows, start, spreadsheet_id,state)
+        checked_state_dict = check_state_dict(drive_service,sheets_service,folder_id,state_dict,state)
+       # pprint(current_state)
+        #num_rows, start, spreadsheet_id = check_state_dict(drive_service,sheets_service,folder_id,state_dict, num_rows, start, spreadsheet_id,state)
 
    
         #write this into a class  called web_data.response/soup/data
@@ -122,12 +125,12 @@ def scrape(df,sheets_service,drive_service, folder_id):
             
 
             #iterates through columns.  Will append columns that are not in the dict and append the data to the request list.  at the end of each page it will update if necessary.
-            num_columns = check_columns(columns,num_columns,seen_columns,spreadsheet_id,requests_list, data_list)
+            num_columns = check_columns(columns,num_columns,state_dict['states'][state]['seen_columns'],spreadsheet_id,requests_list, data_list)
             #pprint(requests_list)
+            pprint(state_dict['states'][state]['seen_columns'])
             
-            
-            num_rows = num_rows + len(normalized)
-            state_dict['states'][state]['num_rows'] = num_rows
+            #num_rows = num_rows + len(normalized)
+            state_dict['states'][state]['num_rows'] =  state_dict['states'][state]['num_rows'] + len(normalized)
 
 
             #set num_rows searched in num_rows of state_dict
@@ -139,7 +142,7 @@ def scrape(df,sheets_service,drive_service, folder_id):
             #create a new function called update column ranges
 
 
-            appended_columns = append_columns_to_data_list(seen_columns,normalized,data_list,state_dict['states'][state]['num_rows'],state_dict['states'][state]['start'])
+            appended_columns = append_columns_to_data_list(state_dict['states'][state]['seen_columns'],normalized,data_list,state_dict['states'][state]['num_rows'],state_dict['states'][state]['start'])
 
             
             
@@ -150,16 +153,16 @@ def scrape(df,sheets_service,drive_service, folder_id):
             appended_blank_rows = append_blank_rows(spreadsheet_id,length,requests_list)
             
             #appended_update_request = append_batch_update_request(spreadsheet_id,length,requests_list,data_list)
-            sent_batch_update_request = send_batch_update_request(requests_list,spreadsheet_id,sheets_service)
-            sent_update_value_request = send_update_values_request(spreadsheet_id,data_list,sheets_service)
+            sent_batch_update_request = send_batch_update_request(requests_list,state_dict['states'][state]['spreadsheet_id'],sheets_service)
+            sent_update_value_request = send_update_values_request(state_dict['states'][state]['spreadsheet_id'],data_list,sheets_service)
             
             #state_dict['states'][state]['num_rows'] = num_rows
-            state_dict['states'][state]['start'] = num_rows
+            state_dict['states'][state]['start'] = state_dict['states'][state]['num_rows']
             #start = num_rows
             #pprint(requests_list)
             time.sleep(random.randint(45,60)) 
             
-        cleaned_up_data = clean_up_data(spreadsheet_id,num_rows,sheets_service)
+        #cleaned_up_data = clean_up_data(spreadsheet_id,num_rows,sheets_service)
         print('You scraped {} pages'.format(n_pages))
 
 
@@ -191,8 +194,6 @@ def append_delete_duplicates_request(spreadsheet_id,requests_list,num_rows):
     requests_list.append(request_body_tmp)
     return True
    
-
-
 def drop(normalized, drop_list):
     for key in drop_list:
         try:
@@ -396,15 +397,15 @@ def get_pop_list():
 
     return pop_list
 
-def check_state_dict(drive_service, sheets_service, folder_id, state_dict, num_rows, start, spreadsheet_id,state):
+def check_state_dict(drive_service,sheets_service,folder_id,state_dict,state):
     # make this into a class... 
     #the class will return all of these value in a pythonic way.  Right now you are writing in c you cookoo bird
 
     if state in state_dict['states'].keys():
         pprint("state already in the dict, asshole!")
-        spreadsheet_id = state_dict['states'][state]['spreadsheet_id']
-        num_rows = state_dict['states'][state]['num_rows']
-        start = num_rows
+        pprint(state_dict['states'][state])
+
+
 
     else:
         state_dict_list = []
@@ -417,22 +418,17 @@ def check_state_dict(drive_service, sheets_service, folder_id, state_dict, num_r
         tmp_state = {
             'spreadsheet_id':spreadsheet_id,
             'num_rows': 2,
-            'start': 2
+            'start': 2,
+            'seen_columns': {}
             }
 
         state_dict['states'][state] = tmp_state
         #state_dict[state] = state
         pprint(state_dict)
         pprint(state_dict['states'].keys())
-        #state_dict['states'][] 
-        #state_dict_list.append(tmp_dict)
-        #pprint(state_dict_list.items())
-        #state_dict[state]['spreadsheet_id'] = spreadsheet_id
-        #state_dict['state'] = state
-        num_rows = 2
-        start = 2
+ 
 
-    return num_rows, start, spreadsheet_id
+    return True
     
 
 
