@@ -1,12 +1,27 @@
 ---
-slug: "github-realtor-scraping-sheets"
-title: "realtor_scraping_sheets"
-repo: "justin-napolitano/realtor_scraping_sheets"
-githubUrl: "https://github.com/justin-napolitano/realtor_scraping_sheets"
-generatedAt: "2025-11-23T09:32:36.243631Z"
-source: "github-auto"
+slug: github-realtor-scraping-sheets
+title: Automated Scraping and Management of Real Estate Agent Data
+repo: justin-napolitano/realtor_scraping_sheets
+githubUrl: https://github.com/justin-napolitano/realtor_scraping_sheets
+generatedAt: '2025-11-23T09:32:36.243631Z'
+source: github-auto
+summary: >-
+  Technical overview of scraping, cleaning, and storing real estate agent data using Python and
+  Google Sheets integration.
+tags:
+  - web-scraping
+  - real-estate
+  - python
+  - google-sheets
+  - data-cleaning
+  - etl-pipeline
+seoPrimaryKeyword: real estate agent data scraping
+seoSecondaryKeywords:
+  - web scraping
+  - google sheets integration
+  - data cleaning
+seoOptimized: true
 ---
-
 
 # Technical Overview of realtor_scraping_sheets
 
