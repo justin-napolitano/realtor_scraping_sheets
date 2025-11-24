@@ -21,6 +21,14 @@ seoSecondaryKeywords:
   - google sheets integration
   - data cleaning
 seoOptimized: true
+topicFamily: datascience
+topicFamilyConfidence: 0.9
+topicFamilyNotes: >-
+  The post focuses on an ETL pipeline involving web scraping, data cleaning, filtering, and
+  exporting data (including integration with cloud storage). This aligns well with the datascience
+  family, which includes ETL pipelines, data analysis, and processing workflows. While the post does
+  automate data extraction and storage, the emphasis on the data processing pipeline and cleaning
+  places it closer to datascience than to automation, which is more about build/deploy workflows.
 ---
 
 # Technical Overview of realtor_scraping_sheets
@@ -80,3 +88,4 @@ This repository implements a multi-faceted approach to scrape, clean, filter, an
 ---
 
 *This document serves as a technical reference for developers revisiting the project.*
+
