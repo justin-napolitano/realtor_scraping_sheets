@@ -1,21 +1,32 @@
 ---
 slug: github-realtor-scraping-sheets
 id: github-realtor-scraping-sheets
-title: realtor_scraping_sheets
+title: Real Estate Data Scraping with Python and Google Sheets
 repo: justin-napolitano/realtor_scraping_sheets
 githubUrl: https://github.com/justin-napolitano/realtor_scraping_sheets
 generatedAt: '2025-11-24T21:36:10.667Z'
 source: github-auto
 summary: >-
-  A Python-based project designed for scraping real estate agent data from
-  multiple real estate listing websites and managing the data through Google
-  Sheets and Google Drive. The repository contains various modules to scrape,
-  clean, filter, and organize data related to realtors, primarily focusing on
-  realtor.com and rew.ca.
-tags: []
-seoPrimaryKeyword: ''
-seoSecondaryKeywords: []
-seoOptimized: false
+  A Python project for scraping realtor data and managing it via Google Sheets
+  and Drive, focusing on realtor.com and rew.ca.
+tags:
+  - python
+  - web scraping
+  - google sheets
+  - google drive
+  - beautifulsoup
+  - pandas
+  - real estate
+seoPrimaryKeyword: realtor data scraping
+seoSecondaryKeywords:
+  - python web scraping
+  - google sheets integration
+  - real estate scraping
+  - data cleaning utilities
+  - realtor.com scraping
+  - rew.ca scraping
+  - API integration
+seoOptimized: true
 topicFamily: null
 topicFamilyConfidence: null
 kind: project
